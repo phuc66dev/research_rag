@@ -1,0 +1,28 @@
+# Local secrets (templates remain tracked)
+.env
+.env.*
+!.env.example
+!.env.*.example
+**/.env
+**/.env.*
+!**/.env.example
+# Generated files and local data
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+backend/data/
+*.db
+*.db-shm
+*.db-wal
+.worktrees/
+.DS_Store
+Thumbs.db
+*.log
+
