@@ -1,11 +1,31 @@
-// Phú: replace this prototype host incrementally with React screens.
-// Prototype state is browser-local; it is intentionally NOT wired to the real API.
+import React from 'react';
+import { AppShell } from './app/AppShell';
+import { AuthPage } from './features/auth/AuthPage';
+import { AuthProvider, useAuth } from './features/auth/AuthContext';
+
+const MainRouter: React.FC = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="app-loading-screen">
+        <div className="app-spinner"></div>
+        <p>Đang tải không gian học tập EduRAG-VN...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthPage />;
+  }
+
+  return <AppShell />;
+};
+
 export function App() {
   return (
-    <iframe
-      className="prototype"
-      src="./prototype.html"
-      title="EduRAG-VN — Prototype giao diện P0"
-    />
+    <AuthProvider>
+      <MainRouter />
+    </AuthProvider>
   );
 }

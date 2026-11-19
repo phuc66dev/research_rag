@@ -10,7 +10,7 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.api import chat, documents, health, sessions, workspaces
+from app.api import auth, chat, documents, health, sessions, workspaces
 from app.core.config import Settings
 from app.models.workspace import Base
 
@@ -54,12 +54,13 @@ def create_app(*, database_url: str | None = None, enable_mock_chat: bool | None
     application.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
-        allow_credentials=False,
+        allow_credentials=True,
         allow_methods=["GET", "POST", "PATCH", "DELETE"],
-        allow_headers=["Content-Type"],
+        allow_headers=["Content-Type", "Authorization"],
     )
     for router in (
         health.router,
+        auth.router,
         workspaces.router,
         documents.router,
         sessions.router,
