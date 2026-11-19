@@ -546,8 +546,9 @@
         "tags": [
           "sessions"
         ],
-        "summary": "List Sessions",
-        "operationId": "list_sessions_api_v1_workspaces__workspace_id__sessions_get",
+        "summary": "List Workspace Sessions",
+        "description": "List chat sessions owned by the current user within a specific workspace with pagination.",
+        "operationId": "list_workspace_sessions_api_v1_workspaces__workspace_id__sessions_get",
         "parameters": [
           {
             "name": "workspace_id",
@@ -558,14 +559,47 @@
               "format": "uuid",
               "title": "Workspace Id"
             }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Max number of sessions to return",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Max number of sessions to return"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of sessions to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Number of sessions to skip"
           }
         ],
         "responses": {
-          "501": {
+          "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChatSessionRead"
+                  },
+                  "title": "Response List Workspace Sessions Api V1 Workspaces  Workspace Id  Sessions Get"
+                }
               }
             }
           },
@@ -583,31 +617,153 @@
       }
     },
     "/api/v1/chat/sessions": {
+      "get": {
+        "tags": [
+          "sessions"
+        ],
+        "summary": "List All User Sessions",
+        "description": "List all chat sessions belonging to the current user, with optional workspace filter, search, and pagination.",
+        "operationId": "list_all_user_sessions_api_v1_chat_sessions_get",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search keyword in session title",
+              "title": "Query"
+            },
+            "description": "Search keyword in session title"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Max number of sessions to return",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Max number of sessions to return"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of sessions to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Number of sessions to skip"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChatSessionRead"
+                  },
+                  "title": "Response List All User Sessions Api V1 Chat Sessions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "sessions"
         ],
         "summary": "Create Session",
+        "description": "Create a new chat session for the authenticated user.",
         "operationId": "create_session_api_v1_chat_sessions_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatSessionCreate"
+              }
+            }
+          }
+        },
         "responses": {
-          "501": {
+          "201": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ChatSessionRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
         }
       }
     },
-    "/api/v1/chat/sessions/{session_id}/messages": {
+    "/api/v1/chat/sessions/{session_id}": {
       "get": {
         "tags": [
           "sessions"
         ],
-        "summary": "List Messages",
-        "operationId": "list_messages_api_v1_chat_sessions__session_id__messages_get",
+        "summary": "Get Session Detail",
+        "description": "Retrieve details and messages of a chat session.\n\nEnforces owner isolation (returns 403 Forbidden if not the owner).",
+        "operationId": "get_session_detail_api_v1_chat_sessions__session_id__get",
         "parameters": [
           {
             "name": "session_id",
@@ -621,11 +777,227 @@
           }
         ],
         "responses": {
-          "501": {
+          "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ChatSessionDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "sessions"
+        ],
+        "summary": "Rename Session",
+        "description": "Rename a chat session.\n\nEnforces owner isolation (returns 403 Forbidden if not the owner).",
+        "operationId": "rename_session_api_v1_chat_sessions__session_id__patch",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatSessionPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatSessionRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "sessions"
+        ],
+        "summary": "Delete Session",
+        "description": "Delete a chat session and all its messages.\n\nEnforces owner isolation (returns 403 Forbidden if not the owner).",
+        "operationId": "delete_session_api_v1_chat_sessions__session_id__delete",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/chat/sessions/{session_id}/messages": {
+      "get": {
+        "tags": [
+          "sessions"
+        ],
+        "summary": "List Session Messages",
+        "description": "Retrieve messages with citations in a chat session with pagination.\n\nEnforces owner isolation (returns 403 Forbidden if not the owner).",
+        "operationId": "list_session_messages_api_v1_chat_sessions__session_id__messages_get",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Max number of messages to return",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Max number of messages to return"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of messages to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Number of messages to skip"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChatMessageRead"
+                  },
+                  "title": "Response List Session Messages Api V1 Chat Sessions  Session Id  Messages Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "sessions"
+        ],
+        "summary": "Append Message",
+        "description": "Append a message to an existing chat session.\n\nEnforces owner isolation (returns 403 Forbidden if not the owner).",
+        "operationId": "append_message_api_v1_chat_sessions__session_id__messages_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatMessageCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMessageRead"
+                }
               }
             }
           },
@@ -760,6 +1132,96 @@
         ],
         "title": "AuthResponse"
       },
+      "ChatMessageCreate": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant"
+            ],
+            "title": "Role",
+            "description": "Role of message sender"
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Content",
+            "description": "Message text content"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/CitationSource"
+            },
+            "type": "array",
+            "title": "Sources",
+            "description": "Citations referenced"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "interrupted",
+              "error"
+            ],
+            "title": "Status",
+            "description": "Status of the generation",
+            "default": "completed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "content"
+        ],
+        "title": "ChatMessageCreate"
+      },
+      "ChatMessageRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/CitationSource"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "session_id",
+          "role",
+          "content",
+          "status",
+          "created_at"
+        ],
+        "title": "ChatMessageRead"
+      },
       "ChatRequest": {
         "properties": {
           "workspace_id": {
@@ -797,6 +1259,211 @@
           "query"
         ],
         "title": "ChatRequest"
+      },
+      "ChatSessionCreate": {
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "title": "Workspace Id",
+            "description": "UUID of the workspace"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title",
+            "default": "Hội thoại mới"
+          }
+        },
+        "type": "object",
+        "required": [
+          "workspace_id"
+        ],
+        "title": "ChatSessionCreate"
+      },
+      "ChatSessionDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "workspace_id": {
+            "type": "string",
+            "title": "Workspace Id"
+          },
+          "owner_id": {
+            "type": "string",
+            "title": "Owner Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "message_count": {
+            "type": "integer",
+            "title": "Message Count",
+            "default": 0
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/ChatMessageRead"
+            },
+            "type": "array",
+            "title": "Messages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "workspace_id",
+          "owner_id",
+          "title",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ChatSessionDetail"
+      },
+      "ChatSessionPatch": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "title": "ChatSessionPatch"
+      },
+      "ChatSessionRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "workspace_id": {
+            "type": "string",
+            "title": "Workspace Id"
+          },
+          "owner_id": {
+            "type": "string",
+            "title": "Owner Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "message_count": {
+            "type": "integer",
+            "title": "Message Count",
+            "default": 0
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "workspace_id",
+          "owner_id",
+          "title",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ChatSessionRead"
+      },
+      "CitationSource": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Unique ID of the citation or chunk"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "UUID of the referenced document"
+          },
+          "document_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Version",
+            "description": "Hash or version of document"
+          },
+          "document_title": {
+            "type": "string",
+            "title": "Document Title",
+            "description": "Title / filename of the document"
+          },
+          "page_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Number",
+            "description": "1-based page number in document"
+          },
+          "snippet": {
+            "type": "string",
+            "title": "Snippet",
+            "description": "Relevant textual quote or excerpt",
+            "default": ""
+          },
+          "bbox": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bbox",
+            "description": "Bounding box if available"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "document_id",
+          "document_title"
+        ],
+        "title": "CitationSource",
+        "description": "Source citation item referenced in AI answers (aligned with contracts/rag.md)."
       },
       "HTTPValidationError": {
         "properties": {

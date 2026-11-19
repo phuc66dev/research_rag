@@ -136,7 +136,7 @@ def test_in_memory_database_is_shared_with_request_threads(url):
         assert len(client.get("/api/v1/workspaces").json()) == 1
 
 
-@pytest.mark.parametrize("resource", ["documents", "sessions"])
+@pytest.mark.parametrize("resource", ["documents"])
 def test_unimplemented_collections_are_not_disguised_as_empty(client, resource):
     item = client.post("/api/v1/workspaces", json={"name": "Môn học"}).json()
     response = client.get(f"/api/v1/workspaces/{item['id']}/{resource}")
@@ -152,8 +152,6 @@ def test_openapi_exposes_sse_media_type_and_unimplemented_statuses(client):
         ("/api/v1/chat/sessions/{session_id}/stream", "post"),
         ("/api/v1/workspaces/{workspace_id}/documents", "get"),
         ("/api/v1/workspaces/{workspace_id}/documents", "post"),
-        ("/api/v1/workspaces/{workspace_id}/sessions", "get"),
-        ("/api/v1/chat/sessions", "post"),
     ]:
         responses = paths[path][method]["responses"]
         assert "501" in responses

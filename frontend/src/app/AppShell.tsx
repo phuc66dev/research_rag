@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../features/auth/AuthContext';
+import { HistoryView } from '../features/history/HistoryView';
 
 export type NavItem = 'workspaces' | 'documents' | 'drive' | 'history';
 
@@ -17,6 +18,13 @@ export const AppShell: React.FC<AppShellProps> = ({
   const { user, logout } = useAuth();
   const [internalNav, setInternalNav] = useState<NavItem>('workspaces');
   const activeItem = controlledNav ?? internalNav;
+
+  // Selected session to resume in workspace
+  const [openedSession, setOpenedSession] = useState<{
+    workspaceId: string;
+    sessionId: string;
+    title: string;
+  } | null>(null);
 
   // Account Menu & Modal State
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -50,6 +58,15 @@ export const AppShell: React.FC<AppShellProps> = ({
       onNavigate(item);
     } else {
       setInternalNav(item);
+    }
+  };
+
+  const handleOpenSessionFromHistory = (workspaceId: string, sessionId: string, title: string) => {
+    setOpenedSession({ workspaceId, sessionId, title });
+    if (onNavigate) {
+      onNavigate('workspaces');
+    } else {
+      setInternalNav('workspaces');
     }
   };
 
@@ -287,6 +304,9 @@ export const AppShell: React.FC<AppShellProps> = ({
                 <div className="slot-header">
                   <h2>Sổ tay môn học</h2>
                 </div>
+
+
+
                 <div className="slot-placeholder-card">
                   <span className="slot-icon">
                     <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -331,19 +351,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             )}
 
             {activeItem === 'history' && (
-              <div className="slot-container">
-                <div className="slot-header">
-                  <h2>Lịch sử hỏi AI</h2>
-                </div>
-                <div className="slot-placeholder-card">
-                  <span className="slot-icon">
-                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 11a9 9 0 1 1 2.5 7M3 4v7h7M12 7v5l3 2" />
-                    </svg>
-                  </span>
-                  <h3>Lịch sử hỏi đáp AI</h3>
-                </div>
-              </div>
+              <HistoryView onOpenSession={handleOpenSessionFromHistory} />
             )}
           </div>
         )}

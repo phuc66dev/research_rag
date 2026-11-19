@@ -9,7 +9,7 @@ export const AuthPage: React.FC = () => {
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
 
   // Register form state
   const [regFullName, setRegFullName] = useState('');
@@ -356,7 +356,7 @@ export const AuthPage: React.FC = () => {
                     <p>Đăng nhập để tiếp tục không gian học tập của bạn</p>
                   </div>
 
-                  <form onSubmit={handleLoginSubmit} className="auth-form-fields" noValidate>
+                  <form onSubmit={handleLoginSubmit} className="auth-form-fields" noValidate autoComplete="off">
                     {/* Identifier */}
                     <div className="field-group">
                       <label htmlFor="login-identifier">Tên đăng nhập hoặc Email</label>
@@ -370,7 +370,7 @@ export const AuthPage: React.FC = () => {
                         <input
                           id="login-identifier"
                           type="text"
-                          autoComplete="username"
+                          autoComplete="off"
                           placeholder="sinhvien@edurag.vn"
                           value={loginIdentifier}
                           onChange={(e) => {
@@ -407,7 +407,7 @@ export const AuthPage: React.FC = () => {
                         <input
                           id="login-password"
                           type={showLoginPassword ? 'text' : 'password'}
-                          autoComplete="current-password"
+                          autoComplete="new-password"
                           placeholder="Nhập mật khẩu"
                           value={loginPassword}
                           onChange={(e) => {
