@@ -68,7 +68,7 @@ def list_all_user_sessions(
     limit: int = Query(default=50, ge=1, le=100, description="Max number of sessions to return"),
     offset: int = Query(default=0, ge=0, description="Number of sessions to skip"),
 ):
-    """List all chat sessions belonging to the current user, with optional workspace filter, search, and pagination."""
+    """List all chat sessions belonging to the current user with search and pagination."""
     items, total = history_service.list_sessions_with_count(
         db=db,
         current_user=current_user,

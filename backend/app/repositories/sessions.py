@@ -231,9 +231,7 @@ def invalidate_document_citations(db: Session, document_id: str) -> int:
     Helper for Bảo when a document is removed: marks the citation as '[Tài liệu đã bị xóa]'.
     """
     messages = list(
-        db.scalars(
-            select(ChatMessage).where(ChatMessage.sources_json.contains(str(document_id)))
-        )
+        db.scalars(select(ChatMessage).where(ChatMessage.sources_json.contains(str(document_id))))
     )
     updated_count = 0
     for msg in messages:

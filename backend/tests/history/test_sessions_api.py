@@ -217,7 +217,7 @@ def test_rename_and_delete_session(client):
 def test_two_users_isolation(client):
     """CRITICAL: User A cannot read, modify, or delete User B's sessions."""
     # User A (Phúc)
-    user_a = register_and_login(client, "phuc_owner", "phuc@edurag.vn")
+    register_and_login(client, "phuc_owner", "phuc@edurag.vn")
     w_a = create_workspace(client, "Sổ tay của Phúc")
     session_a = client.post(
         "/api/v1/chat/sessions",
@@ -367,4 +367,3 @@ def test_sessions_and_messages_pagination(client):
     assert res_m2.status_code == 200
     assert len(res_m2.json()) == 2
     assert res_m2.headers["X-Has-More"] == "false"
-

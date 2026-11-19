@@ -622,7 +622,7 @@
           "sessions"
         ],
         "summary": "List All User Sessions",
-        "description": "List all chat sessions belonging to the current user, with optional workspace filter, search, and pagination.",
+        "description": "List all chat sessions belonging to the current user with search and pagination.",
         "operationId": "list_all_user_sessions_api_v1_chat_sessions_get",
         "parameters": [
           {
