@@ -133,8 +133,8 @@ def test_chat_requires_nonempty_scope_and_question(client):
 
 def test_real_chat_never_silently_uses_mock(client):
     response = client.post(f"/api/v1/chat/sessions/{uuid4()}/stream", json=mock_request())
-    assert response.status_code == 501
-    assert response.json()["detail"]["code"] == "not_implemented"
+    assert response.status_code == 404
+    assert response.json()["detail"]["code"] == "session_not_found"
 
 
 def test_workspace_timestamps_include_utc_offset(client):
@@ -163,7 +163,7 @@ def test_document_collection_is_implemented_and_initially_empty(client, resource
     assert response.json() == []
 
 
-def test_openapi_exposes_sse_media_type_and_unimplemented_statuses(client):
+def test_openapi_exposes_real_and_mock_sse_media_type(client):
     paths = client.get("/openapi.json").json()["paths"]
     mock_response = paths["/api/v1/chat/mock/stream"]["post"]["responses"]["200"]
     assert "text/event-stream" in mock_response.get("content", {})
@@ -171,8 +171,8 @@ def test_openapi_exposes_sse_media_type_and_unimplemented_statuses(client):
         ("/api/v1/chat/sessions/{session_id}/stream", "post"),
     ]:
         responses = paths[path][method]["responses"]
-        assert "501" in responses
-        assert "200" not in responses
+        assert "501" not in responses
+        assert "text/event-stream" in responses["200"]["content"]
     document_path = paths["/api/v1/workspaces/{workspace_id}/documents"]
     assert "200" in document_path["get"]["responses"]
     assert "202" in document_path["post"]["responses"]

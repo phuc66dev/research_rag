@@ -10,15 +10,16 @@ Mỗi người làm xuyên suốt frontend–backend; xem docs/MODULE-OWNERSHIP.
 | --------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | Git, cấu trúc module, quy tắc nhóm, template PR, CI       | Đã tạo cục bộ; chưa push lên GitHub                                           |
 | FastAPI health, CRUD sổ tay và SQLite persistence         | Có triển khai và test                                                         |
-| SSE mock và parser TypeScript                             | Có; chat generation thật vẫn 501, mock không phải AI thật |
-| React/Vite                                                | Auth, history và Tài liệu của tôi đã có React/API; workspace UI còn slot cho Phúc |
+| SSE chat và parser TypeScript                             | Có chat thật qua API tương thích OpenAI; cấu hình backend, không fallback mock |
+| React/Vite                                                | Auth, history, tài liệu, sổ tay và màn hình chat hai cột đã nối API |
 | PDF upload/extraction/embedding/retrieval                   | Có pipeline thật, model CPU đa ngôn ngữ và vector lưu SQLite; xem docs/BAO-DOCUMENTS.md |
 | Auth/history                                              | Có triển khai; workspace/document dùng current user và owner filtering |
-| OCR, DOCX/TXT, Qdrant production, LLM                       | Chưa triển khai trong demo rút gọn |
+| OCR, DOCX/TXT, Qdrant production                           | Chưa triển khai trong demo rút gọn |
 
 Trang chủ hiện là luồng đăng nhập và app shell React. Prototype HTML vẫn là tài liệu tham chiếu;
 không dùng chức năng mô phỏng của prototype như bằng chứng API đã hoạt động.
 Kế hoạch, cách chạy và giới hạn phần Bảo: [BAO-DOCUMENTS.md](docs/BAO-DOCUMENTS.md).
+Chat trong sổ tay, cấu hình LLM và giới hạn kiểm chứng: [CHAT.md](docs/CHAT.md).
 
 ## Yêu cầu
 
@@ -145,7 +146,7 @@ Qdrant là dịch vụ tùy chọn, hiện chưa nối vào API. Cấu hình con
 ## Phát hành và dữ liệu
 
 Giữ dịch vụ trên localhost. Auth/history và document đã có code, nhưng chưa nghiệm thu pilot
-công khai; chat generation/UI học tập chưa hoàn tất. Xóa workspace điều phối dọn tài liệu,
+công khai; chat cần URL/model/key AI ở backend và kiểm chứng nhà cung cấp thật. Xóa workspace điều phối dọn tài liệu,
 vector và history. Migration giữ workspace cũ chưa có owner ở trạng thái không truy cập được,
 không tự gán dữ liệu cũ cho user mới. Không xem localStorage của prototype là lưu trữ sản phẩm.
 Không commit `.env`, file người dùng, database, API key hoặc thư mục môi trường ảo.

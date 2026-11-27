@@ -1,4 +1,4 @@
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,3 +17,8 @@ class Settings(BaseSettings):
     document_job_timeout: int = Field(default=600, ge=10, le=3600)
     embedding_model: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     embedding_cache_dir: str = "./data/models"
+    llm_base_url: str = ""
+    llm_model: str = ""
+    llm_api_key: SecretStr = SecretStr("")
+    llm_timeout_seconds: int = Field(default=120, ge=10, le=300)
+    llm_max_tokens: int = Field(default=2048, ge=128, le=8192)

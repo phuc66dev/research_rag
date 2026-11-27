@@ -1,14 +1,10 @@
 """Deterministic UI transport fixture, never retrieval or factual AI output."""
 
-import json
 from collections.abc import Iterator
 from uuid import uuid4
 
 from app.services.rag.contracts import ChatRequest, Citation
-
-
-def sse(event: str, payload: dict) -> str:
-    return f"event: {event}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
+from app.services.rag.events import sse
 
 
 def mock_events(body: ChatRequest) -> Iterator[str]:

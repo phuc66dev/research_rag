@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "EduRAG-VN",
-    "description": "Local API with authentication, PDF ingestion and source retrieval. Chat generation is not implemented.",
+    "description": "Local API with authentication, PDF ingestion and source retrieval. Source-grounded chat streams through a configured OpenAI-compatible provider.",
     "version": "0.1.0"
   },
   "paths": {
@@ -1210,11 +1210,13 @@
           }
         },
         "responses": {
-          "501": {
+          "200": {
             "description": "Successful Response",
             "content": {
-              "application/json": {
-                "schema": {}
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
               }
             }
           },

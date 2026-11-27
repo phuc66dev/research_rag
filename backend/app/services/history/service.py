@@ -277,6 +277,35 @@ class HistoryService:
         )
         return ChatMessageRead.from_orm(user_msg), ChatMessageRead.from_orm(assistant_msg)
 
+    def begin_stream(self, db, session_id, current_user, query, selected_sources, citations):
+        """Save the question and crash-safe assistant placeholder in one transaction."""
+        session = self.get_session_or_404(db, session_id, current_user=current_user)
+        try:
+            repo.add_message(db, session, "user", query, sources=selected_sources, commit=False)
+            assistant = repo.add_message(
+                db,
+                session,
+                "assistant",
+                "",
+                sources=citations,
+                status="interrupted",
+                commit=False,
+            )
+            db.commit()
+            return ChatMessageRead.from_orm(assistant)
+        except Exception:
+            db.rollback()
+            raise
+
+    def update_stream(self, db, session_id, current_user, message_id, content, status):
+        session = self.get_session_or_404(db, session_id, current_user=current_user)
+        from app.models.message import ChatMessage
+
+        message = db.get(ChatMessage, str(message_id))
+        if message is None or message.session_id != session.id or message.role != "assistant":
+            raise HTTPException(status_code=404, detail="Không tìm thấy câu trả lời.")
+        return ChatMessageRead.from_orm(repo.update_message(db, message, content, status))
+
     def cleanup_citations_for_document(self, db: Session, document_id: str | UUID) -> int:
         """Helper for teammate Bảo:
 

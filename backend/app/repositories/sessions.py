@@ -176,6 +176,7 @@ def add_message(
     content: str,
     sources: list[dict[str, Any]] | list[Any] | None = None,
     status: str = "completed",
+    commit: bool = True,
 ) -> ChatMessage:
     """Add a message to a session, serialize sources to JSON, and update session.updated_at."""
     sources_data = []
@@ -203,9 +204,21 @@ def add_message(
         session.title = (trimmed[:50] + "...") if len(trimmed) > 50 else trimmed
 
     session.updated_at = now
-    db.commit()
+    if commit:
+        db.commit()
+    else:
+        db.flush()
     db.refresh(msg)
     return msg
+
+
+def update_message(db: Session, message: ChatMessage, content: str, status: str) -> ChatMessage:
+    message.content = content
+    message.status = status
+    message.session.updated_at = datetime.now(UTC)
+    db.commit()
+    db.refresh(message)
+    return message
 
 
 def delete_workspace_sessions(

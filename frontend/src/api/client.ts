@@ -1,10 +1,14 @@
 import type { Health, Workspace } from './types';
 
-export const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, '');
+export const API_BASE = (import.meta.env?.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, '');
 
 export class ApiError extends Error {
-  constructor(public status: number, public detail: unknown) {
+  public status: number;
+  public detail: unknown;
+  constructor(status: number, detail: unknown) {
     super(typeof detail === 'string' ? detail : JSON.stringify(detail));
+    this.status = status;
+    this.detail = detail;
     this.name = 'ApiError';
   }
 }

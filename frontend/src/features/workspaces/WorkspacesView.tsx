@@ -9,6 +9,7 @@ import './workspaces.css';
 interface Props {
   startCreating?: boolean;
   onOpenDocuments: (workspaceId: string) => void;
+  onOpenStudy: (workspaceId: string) => void;
 }
 
 type WorkspaceDialog = { kind: 'rename' | 'delete'; workspace: Workspace };
@@ -26,7 +27,7 @@ function RequestError({ message, expired }: { message: string; expired?: boolean
   </div>;
 }
 
-export function WorkspacesView({ startCreating = false, onOpenDocuments }: Props) {
+export function WorkspacesView({ startCreating = false, onOpenDocuments, onOpenStudy }: Props) {
   const [items, setItems] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -202,7 +203,9 @@ export function WorkspacesView({ startCreating = false, onOpenDocuments }: Props
                 <span>Cập nhật <time dateTime={item.updated_at}>{new Date(item.updated_at)
                   .toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}</time></span></div>
             </div>
-            <div className="workspace-card-actions"><button type="button" disabled={busy}
+            <div className="workspace-card-actions"><button type="button" className="workspace-primary" disabled={busy}
+              onClick={() => onOpenStudy(item.id)} aria-label={`Hỏi AI trong ${item.name}`}>Hỏi AI</button>
+              <button type="button" disabled={busy}
               aria-label={`Thêm tài liệu vào ${item.name}`} onClick={() => onOpenDocuments(item.id)}>Thêm tài liệu</button>
               <WorkspaceActions name={item.name} disabled={busy} onRename={() => {
                 resetError(); setRename(item.name); setDialog({ kind: 'rename', workspace: item });

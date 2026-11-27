@@ -3,6 +3,7 @@ import { useAuth } from '../features/auth/AuthContext';
 import { HistoryView } from '../features/history/HistoryView';
 import { DocumentsView } from '../features/documents/DocumentsView';
 import { WorkspacesView } from '../features/workspaces/WorkspacesView';
+import { StudyView } from '../features/study/StudyView';
 
 export type NavItem = 'workspaces' | 'documents' | 'drive' | 'history';
 
@@ -28,7 +29,12 @@ export const AppShell: React.FC<AppShellProps> = ({
     workspaceId: string;
     sessionId: string;
     title: string;
-  } | null>(null);
+  } | null>(() => {
+    if (!window.location.hash.startsWith('#study?')) return null;
+    const params = new URLSearchParams(window.location.hash.slice(7));
+    const workspaceId = params.get('workspace');
+    return workspaceId ? { workspaceId, sessionId: params.get('session') || '', title: '' } : null;
+  });
 
   // Account Menu & Modal State
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -58,6 +64,8 @@ export const AppShell: React.FC<AppShellProps> = ({
   }, []);
 
   const handleNavClick = (item: NavItem) => {
+    setOpenedSession(null);
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
     setStartCreatingWorkspace(false);
     if (onNavigate) {
       onNavigate(item);
@@ -68,6 +76,7 @@ export const AppShell: React.FC<AppShellProps> = ({
 
   const handleOpenSessionFromHistory = (workspaceId: string, sessionId: string, title: string) => {
     setOpenedSession({ workspaceId, sessionId, title });
+    window.history.replaceState(null, '', `#study?${new URLSearchParams({ workspace: workspaceId, session: sessionId })}`);
     if (onNavigate) {
       onNavigate('workspaces');
     } else {
@@ -304,8 +313,15 @@ export const AppShell: React.FC<AppShellProps> = ({
           children
         ) : (
           <div className="app-content-slot">
-            {activeItem === 'workspaces' && (
-              <WorkspacesView startCreating={startCreatingWorkspace} onOpenDocuments={workspaceId => {
+            {activeItem === 'workspaces' && (openedSession ? <StudyView
+              key={`${openedSession.workspaceId}/${openedSession.sessionId}`}
+              workspaceId={openedSession.workspaceId} initialSessionId={openedSession.sessionId || undefined}
+              onBack={() => handleNavClick('workspaces')} onOpenDocuments={() => {
+                setDocumentWorkspaceId(openedSession.workspaceId); handleNavClick('documents');
+              }} /> :
+              <WorkspacesView startCreating={startCreatingWorkspace}
+              onOpenStudy={workspaceId => handleOpenSessionFromHistory(workspaceId, '', '')}
+              onOpenDocuments={workspaceId => {
                 setDocumentWorkspaceId(workspaceId);
                 handleNavClick('documents');
               }} />

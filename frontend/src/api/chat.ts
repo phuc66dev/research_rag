@@ -1,10 +1,11 @@
-import { API_BASE, ApiError } from './client';
-import { parseSse } from './events';
+import { API_BASE, ApiError } from './client.ts';
+import { parseSse } from './events.ts';
 import type { ChatEvent, ChatRequest } from './types';
 
 async function* stream(path: string, body: ChatRequest, signal?: AbortSignal): AsyncGenerator<ChatEvent> {
   const response = await fetch(API_BASE + path, {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
     body: JSON.stringify(body),
     signal,
@@ -18,7 +19,12 @@ async function* stream(path: string, body: ChatRequest, signal?: AbortSignal): A
   }
   let completed = false;
   for await (const event of parseSse(response.body)) {
-    if (event.event === 'done') completed = true;
+    if (event.event === 'error') throw new Error(event.data.message);
+    if (event.event === 'done') {
+      completed = true;
+      yield event;
+      return;
+    }
     yield event;
   }
   if (!completed) throw new Error('Hội thoại bị gián đoạn trước khi hoàn tất.');

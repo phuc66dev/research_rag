@@ -3,12 +3,13 @@
 Chủ hợp đồng generation/chat: **Phúc** (cả UI và API). **Bảo** sở hữu extraction/index/retrieval; **Phú** sở hữu auth và persistence/history. Các consumer cùng review khi thay hợp đồng.
 Thay đổi payload phải cập nhật Python schema, TypeScript types, test và OpenAPI trong cùng PR.
 
-## Trạng thái hiện hành — cập nhật 26/11/2026
+## Trạng thái hiện hành — cập nhật 27/11/2026
 
 - Health và CRUD workspace chạy thật trên SQLite; workspace hiện có owner filtering qua auth.
 - Document upload/list/status/file/retry/delete và source search đã triển khai; xem
   [hợp đồng retrieval](retrieval.md) cho payload/quyền/giới hạn. File chỉ mở khi nguồn ready.
-- Auth và session/message/history có code. Chat generation thật vẫn trả **501**.
+- Auth và session/message/history có code. Chat thật dùng retrieval và nhà cung cấp
+  Chat Completions tương thích OpenAI; cần cấu hình backend. Xem [CHAT.md](../docs/CHAT.md).
 - `POST /api/v1/chat/mock/stream` là fixture để Phú làm UI. Không truy cập Qdrant, LLM,
   không xác thực workspace/document tồn tại và không lưu hội thoại.
 - Mock không chứng minh chất lượng RAG hoặc phân quyền; dùng UUID tổng hợp, không dùng như API sản phẩm.
@@ -78,9 +79,34 @@ data: {"message_id":"UUID","provider":"mock","mock":true}
 - Citation trước token. Chỉ mục [1] tương ứng phần tử thứ nhất trong citations.
 - Error tương lai: `event: error`, `data: {"code":"provider_unavailable","message":"..."}`.
   SSE lỗi sau khi bắt đầu trả HTTP 200 phải dùng sự kiện error; không thể đổi lại HTTP status.
-- Không có căn cứ: citations rỗng, trả lời nêu thiếu thông tin, rồi done. Chưa cài RAG thật.
+- Không tìm được đoạn phù hợp: citations rỗng, trả lời nêu thiếu thông tin, rồi done,
+  provider=`retrieval`, không gọi LLM. Có đoạn nhưng thiếu căn cứ: prompt yêu cầu AI nói rõ.
 - Khi kết nối ngắt trước done, UI giữ nội dung đã nhận và đánh dấu gián đoạn.
 - Transport client: `frontend/src/api/chat.ts`; parser có test cho CRLF, UTF-8 và mất kết nối.
+
+### Chat thật và persistence
+
+`POST /chat/sessions/{session_id}/stream` giữ nguyên request và các loại event bên trên;
+response 200 `text/event-stream`, `mock=false`. Trước stream kiểm tra đăng nhập (401),
+owner/workspace/phạm vi nguồn (403/404), mọi nguồn ready (409), cấu hình/model retrieval (503).
+Thiếu URL/model AI trả 503 `llm_not_configured`; không fallback sang mock. Một session đang
+chạy không nhận lượt thứ hai (409); demo dùng một tiến trình API.
+
+Citation lấy từ chunks thật, snippet tối đa 2.400 ký tự/chunk, bbox=null nếu chưa có.
+Citation phát trước token; done chứa ID assistant đã lưu, provider=`openai-compatible`.
+Chỉ phát done sau khi lưu trạng thái completed. Provider lỗi/timeout/cắt/ngắt trước `[DONE]`
+phát error, giữ text đã nhận và status=error; mất kết nối client giữ status=interrupted.
+Placeholder và từng đoạn text được lưu trước khi gửi, nên crash không tạo completed giả.
+Chỉ mục số ngoài danh sách làm lượt trả lời lỗi, không được completed; chưa chứng minh
+tính đúng của từng nhận định bằng kiểm tra ngữ nghĩa tự động.
+
+Payload REST session/message giữ nguyên. Message **user** lưu tập nguồn được chọn trong
+`sources`: id=document_id, document_id, document_version, document_title, snippet="",
+page_number=null, bbox=null. Đây là snapshot phạm vi nguồn, không phải citation của câu trả lời.
+Message **assistant** lưu citations thật trong sources. UI dùng snapshot của user cuối để
+khôi phục lựa chọn, chỉ giữ các tài liệu hiện còn ready. Câu hỏi trước cùng tập nguồn và
+câu trả lời hoàn tất với nguồn/version còn hợp lệ giúp giải nghĩa ngữ cảnh; chỉ chunks
+hiện truy xuất trong nguồn đang chọn được dùng làm bằng chứng.
 
 ## REST và lỗi
 

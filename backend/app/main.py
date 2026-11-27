@@ -69,7 +69,7 @@ def create_app(
         version="0.1.0",
         description=(
             "Local API with authentication, PDF ingestion and source retrieval. "
-            "Chat generation is not implemented."
+            "Source-grounded chat streams through a configured OpenAI-compatible provider."
         ),
         lifespan=lifespan,
     )
