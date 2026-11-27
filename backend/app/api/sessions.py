@@ -43,7 +43,7 @@ def list_workspace_sessions(
     offset: int = Query(default=0, ge=0, description="Number of sessions to skip"),
 ):
     """List chat sessions owned by the current user within a specific workspace with pagination."""
-    require_workspace(db, workspace_id)
+    require_workspace(db, workspace_id, current_user)
     items, total = history_service.list_sessions_with_count(
         db=db,
         current_user=current_user,

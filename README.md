@@ -10,20 +10,22 @@ Mỗi người làm xuyên suốt frontend–backend; xem docs/MODULE-OWNERSHIP.
 | --------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | Git, cấu trúc module, quy tắc nhóm, template PR, CI       | Đã tạo cục bộ; chưa push lên GitHub                                           |
 | FastAPI health, CRUD sổ tay và SQLite persistence         | Có triển khai và test                                                         |
-| SSE mock và parser TypeScript                             | Có triển khai và test; không phải AI thật                                     |
-| React/Vite                                                | Chạy nguyên prototype đã chốt trong iframe; chưa viết lại màn hình bằng React |
-| API client typed                                          | Có, chưa nối vào prototype; dữ liệu prototype vẫn riêng trong localStorage    |
-| Upload/OCR, Qdrant retrieval, LLM, chat persistence, auth | Chưa triển khai; endpoint ghi rõ 501 khi phù hợp                              |
+| SSE mock và parser TypeScript                             | Có; chat generation thật vẫn 501, mock không phải AI thật |
+| React/Vite                                                | Auth, history và Tài liệu của tôi đã có React/API; workspace UI còn slot cho Phúc |
+| PDF upload/extraction/embedding/retrieval                   | Có pipeline thật, model CPU đa ngôn ngữ và vector lưu SQLite; xem docs/BAO-DOCUMENTS.md |
+| Auth/history                                              | Có triển khai; workspace/document dùng current user và owner filtering |
+| OCR, DOCX/TXT, Qdrant production, LLM                       | Chưa triển khai trong demo rút gọn |
 
-Prototype mở ở trang chủ; chọn màn hình và trạng thái ở thanh trên cùng.
-Không dùng các chức năng mô phỏng trong prototype như bằng chứng API đã hoạt động.
+Trang chủ hiện là luồng đăng nhập và app shell React. Prototype HTML vẫn là tài liệu tham chiếu;
+không dùng chức năng mô phỏng của prototype như bằng chứng API đã hoạt động.
+Kế hoạch, cách chạy và giới hạn phần Bảo: [BAO-DOCUMENTS.md](docs/BAO-DOCUMENTS.md).
 
 ## Yêu cầu
 
 - Node.js 24.x và npm.
 - Python 3.12 (khuyến nghị; package chấp nhận từ 3.12 đến dưới 3.15).
 - Git; Docker Compose chỉ cần cho cách chạy bằng container.
-- Chưa cần API key hoặc Qdrant để chạy bootstrap.
+- Chưa cần API key hoặc Qdrant. Xử lý PDF lần đầu cần mạng để tải model embedding công khai.
 
 ## Chạy cục bộ trên Windows
 
@@ -75,11 +77,15 @@ Frontend dùng cùng lệnh npm. Trong các lệnh kiểm tra bên dưới, thay
 PowerShell ở terminal khác:
 
 ```powershell
-$workspace = Invoke-RestMethod -Uri http://127.0.0.1:8000/api/v1/workspaces -Method Post -ContentType application/json -Body '{"name":"Kinh tế vĩ mô"}'
-Invoke-RestMethod -Uri http://127.0.0.1:8000/api/v1/workspaces
+# Thay placeholder bằng token trả từ POST /api/v1/auth/login; không lưu token vào source.
+$authHeaders = @{ Authorization = 'Bearer <token-từ-API-đăng-nhập>' }
+$workspace = Invoke-RestMethod -Uri http://127.0.0.1:8000/api/v1/workspaces -Method Post -Headers $authHeaders -ContentType application/json -Body '{"name":"Kinh tế vĩ mô"}'
+Invoke-RestMethod -Uri http://127.0.0.1:8000/api/v1/workspaces -Headers $authHeaders
 ```
 
-Sổ tay API lưu trên SQLite; danh sách trong prototype không tự đồng bộ với API ở giai đoạn này.
+Các lệnh workspace trên dùng Authorization Bearer từ API đăng nhập; có thể thay bằng WebSession
+có cookie đăng nhập. Có thể dùng Swagger để đăng ký/đăng nhập/tạo workspace. Owner lấy từ phiên máy chủ;
+không gửi user_id. Sổ tay API lưu SQLite; dữ liệu localStorage trong prototype vẫn tách biệt.
 
 Luồng SSE mock, chạy từ thư mục backend:
 
@@ -117,7 +123,7 @@ Không chỉnh thủ công snapshot để che thay đổi API.
 
 ```bash
 docker compose up --build
-# Chỉ khi Phúc bắt đầu tích hợp Qdrant:
+# Qdrant tùy chọn cho bước mở rộng retrieval của Bảo:
 docker compose --profile rag up --build
 ```
 
@@ -133,12 +139,13 @@ Qdrant là dịch vụ tùy chọn, hiện chưa nối vào API. Cấu hình con
 - Phú: history/auth/authorization nền tảng/app shell, gồm UI, API, dữ liệu và test.
 - contracts/ là hợp đồng chung; đổi phải được cả bên cung cấp và bên sử dụng review.
 - edurag-p0.html là prototype gốc; owner từng module chuyển sang React khi thực hiện task.
-- Cấu trúc module mới là kế hoạch, chưa tự thay đổi code hoặc thêm auth/RAG thật.
+- Theo dõi trạng thái module hiện tại qua code/test và hướng dẫn riêng; BOOTSTRAP-STATUS là ghi nhận lịch sử.
 - Cách phối hợp: [TEAM-WORKFLOW.md](docs/TEAM-WORKFLOW.md); trạng thái bootstrap: [BOOTSTRAP-STATUS.md](docs/BOOTSTRAP-STATUS.md).
 
 ## Phát hành và dữ liệu
 
-Bootstrap **chưa có xác thực**, chỉ dành cho phát triển một người dùng trên localhost.
-Chưa có luồng xóa file/vector/chat thật; workspace hiện chưa có các dữ liệu liên quan đó.
-Không mở dịch vụ ra Internet hoặc xem dữ liệu localStorage của prototype là lưu trữ sản phẩm.
+Giữ dịch vụ trên localhost. Auth/history và document đã có code, nhưng chưa nghiệm thu pilot
+công khai; chat generation/UI học tập chưa hoàn tất. Xóa workspace điều phối dọn tài liệu,
+vector và history. Migration giữ workspace cũ chưa có owner ở trạng thái không truy cập được,
+không tự gán dữ liệu cũ cho user mới. Không xem localStorage của prototype là lưu trữ sản phẩm.
 Không commit `.env`, file người dùng, database, API key hoặc thư mục môi trường ảo.

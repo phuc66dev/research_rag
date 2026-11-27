@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../features/auth/AuthContext';
 import { HistoryView } from '../features/history/HistoryView';
+import { DocumentsView } from '../features/documents/DocumentsView';
+import { WorkspacesView } from '../features/workspaces/WorkspacesView';
 
 export type NavItem = 'workspaces' | 'documents' | 'drive' | 'history';
 
@@ -18,6 +20,8 @@ export const AppShell: React.FC<AppShellProps> = ({
   const { user, logout } = useAuth();
   const [internalNav, setInternalNav] = useState<NavItem>('workspaces');
   const activeItem = controlledNav ?? internalNav;
+  const [documentWorkspaceId, setDocumentWorkspaceId] = useState<string>();
+  const [startCreatingWorkspace, setStartCreatingWorkspace] = useState(false);
 
   // Selected session to resume in workspace
   const [openedSession, setOpenedSession] = useState<{
@@ -54,6 +58,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   }, []);
 
   const handleNavClick = (item: NavItem) => {
+    setStartCreatingWorkspace(false);
     if (onNavigate) {
       onNavigate(item);
     } else {
@@ -300,38 +305,17 @@ export const AppShell: React.FC<AppShellProps> = ({
         ) : (
           <div className="app-content-slot">
             {activeItem === 'workspaces' && (
-              <div className="slot-container">
-                <div className="slot-header">
-                  <h2>Sổ tay môn học</h2>
-                </div>
-
-
-
-                <div className="slot-placeholder-card">
-                  <span className="slot-icon">
-                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 5C9 3 5 3 2 4v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1Zm0 0v15" />
-                    </svg>
-                  </span>
-                  <h3>Khu vực Sổ tay môn học</h3>
-                </div>
-              </div>
+              <WorkspacesView startCreating={startCreatingWorkspace} onOpenDocuments={workspaceId => {
+                setDocumentWorkspaceId(workspaceId);
+                handleNavClick('documents');
+              }} />
             )}
 
             {activeItem === 'documents' && (
-              <div className="slot-container">
-                <div className="slot-header">
-                  <h2>Tài liệu của tôi</h2>
-                </div>
-                <div className="slot-placeholder-card">
-                  <span className="slot-icon">
-                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Zm0 0v6h6M8 13h8M8 17h6" />
-                    </svg>
-                  </span>
-                  <h3>Khu vực quản lý tài liệu</h3>
-                </div>
-              </div>
+              <DocumentsView initialWorkspaceId={documentWorkspaceId} onCreateWorkspace={() => {
+                handleNavClick('workspaces');
+                setStartCreatingWorkspace(true);
+              }} />
             )}
 
             {activeItem === 'drive' && (

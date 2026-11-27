@@ -228,10 +228,9 @@ def test_two_users_isolation(client):
     client.cookies.clear()
     register_and_login(client, "phu_attacker", "phu_attacker@edurag.vn")
 
-    # User B lists sessions in w_a -> 0 sessions
+    # Workspace ownership now rejects access before listing another owner's sessions.
     res_list = client.get(f"/api/v1/workspaces/{w_a}/sessions")
-    assert res_list.status_code == 200
-    assert len(res_list.json()) == 0
+    assert res_list.status_code == 403
 
     # User B tries to read session_a -> 403 Forbidden
     res_get = client.get(f"/api/v1/chat/sessions/{session_a['id']}")

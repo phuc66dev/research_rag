@@ -240,6 +240,9 @@ def invalidate_document_citations(db: Session, document_id: str) -> int:
             changed = False
             for src in sources:
                 if str(src.get("document_id")) == str(document_id):
+                    # Cleanup can be retried after file I/O or worker interruption.
+                    if src.get("snippet") == "[Tài liệu gốc đã bị xóa khỏi hệ thống]":
+                        continue
                     src["document_title"] = f"{src.get('document_title', '')} (Đã bị xóa)"
                     src["snippet"] = "[Tài liệu gốc đã bị xóa khỏi hệ thống]"
                     changed = True

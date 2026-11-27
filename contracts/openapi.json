@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "EduRAG-VN",
-    "description": "Local bootstrap API. No authentication or production RAG yet.",
+    "description": "Local API with authentication, PDF ingestion and source retrieval. Chat generation is not implemented.",
     "version": "0.1.0"
   },
   "paths": {
@@ -358,11 +358,17 @@
           }
         ],
         "responses": {
-          "501": {
+          "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentRead"
+                  },
+                  "title": "Response List Documents Api V1 Workspaces  Workspace Id  Documents Get"
+                }
               }
             }
           },
@@ -394,14 +400,27 @@
               "format": "uuid",
               "title": "Workspace Id"
             }
+          },
+          {
+            "name": "filename",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "title": "Filename"
+            }
           }
         ],
         "responses": {
-          "501": {
+          "202": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentRead"
+                }
               }
             }
           },
@@ -412,6 +431,17 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/pdf": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
               }
             }
           }
@@ -438,11 +468,13 @@
           }
         ],
         "responses": {
-          "501": {
+          "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentRead"
+                }
               }
             }
           },
@@ -479,11 +511,52 @@
           }
         ],
         "responses": {
-          "501": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/pdf": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}/retry": {
+      "post": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Retry Document",
+        "operationId": "retry_document_api_v1_documents__document_id__retry_post",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentRead"
+                }
               }
             }
           },
@@ -520,11 +593,63 @@
           }
         ],
         "responses": {
-          "501": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/sources/search": {
+      "post": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Search",
+        "operationId": "search_api_v1_workspaces__workspace_id__sources_search_post",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workspace Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceSearch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SourceChunk"
+                  },
+                  "title": "Response Search Api V1 Workspaces  Workspace Id  Sources Search Post"
+                }
               }
             }
           },
@@ -1465,6 +1590,104 @@
         "title": "CitationSource",
         "description": "Source citation item referenced in AI answers (aligned with contracts/rag.md)."
       },
+      "DocumentRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "workspace_id": {
+            "type": "string",
+            "title": "Workspace Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "document_version": {
+            "type": "string",
+            "title": "Document Version"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "processing",
+              "ready",
+              "failed",
+              "deleting"
+            ],
+            "title": "Status"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "page_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Count"
+          },
+          "chunk_count": {
+            "type": "integer",
+            "title": "Chunk Count"
+          },
+          "embedding_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Embedding Model"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "workspace_id",
+          "title",
+          "document_version",
+          "size_bytes",
+          "status",
+          "error_code",
+          "page_count",
+          "chunk_count",
+          "embedding_model",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "DocumentRead"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1477,6 +1700,97 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "SourceChunk": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id"
+          },
+          "document_version": {
+            "type": "string",
+            "title": "Document Version"
+          },
+          "document_title": {
+            "type": "string",
+            "title": "Document Title"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "page_number": {
+            "type": "integer",
+            "title": "Page Number"
+          },
+          "section_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section Title"
+          },
+          "bbox": {
+            "type": "null",
+            "title": "Bbox"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "document_id",
+          "document_version",
+          "document_title",
+          "text",
+          "page_number",
+          "score"
+        ],
+        "title": "SourceChunk"
+      },
+      "SourceSearch": {
+        "properties": {
+          "document_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Document Ids"
+          },
+          "query": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Query"
+          },
+          "limit": {
+            "type": "integer",
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "default": 6
+          }
+        },
+        "type": "object",
+        "required": [
+          "document_ids",
+          "query"
+        ],
+        "title": "SourceSearch"
       },
       "UserLogin": {
         "properties": {

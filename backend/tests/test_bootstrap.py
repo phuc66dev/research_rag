@@ -9,6 +9,21 @@ from fastapi.testclient import TestClient
 from app.main import create_app
 
 
+def authenticate(client):
+    client.post(
+        "/api/v1/auth/register",
+        json={
+            "username": "bootstrap",
+            "email": "bootstrap@example.test",
+            "password": "Fixture123!",
+        },
+    )
+    response = client.post(
+        "/api/v1/auth/login", json={"username_or_email": "bootstrap", "password": "Fixture123!"}
+    )
+    assert response.status_code == 200
+
+
 @pytest.fixture
 def database_url(tmp_path):
     return f"sqlite:///{(tmp_path / 'test.db').as_posix()}"
@@ -17,6 +32,7 @@ def database_url(tmp_path):
 @pytest.fixture
 def client(database_url):
     with TestClient(create_app(database_url=database_url, enable_mock_chat=True)) as client:
+        authenticate(client)
         yield client
 
 
@@ -50,8 +66,10 @@ def test_invalid_workspace_name_is_rejected(client, name):
 
 def test_workspace_survives_new_application_instance(database_url):
     with TestClient(create_app(database_url=database_url)) as first:
+        authenticate(first)
         created = first.post("/api/v1/workspaces", json={"name": "Xác suất"}).json()
     with TestClient(create_app(database_url=database_url)) as second:
+        authenticate(second)
         assert second.get("/api/v1/workspaces").json()[0]["id"] == created["id"]
 
 
@@ -131,17 +149,18 @@ def test_workspace_timestamps_include_utc_offset(client):
 @pytest.mark.parametrize("url", ["sqlite:///:memory:", "sqlite://"])
 def test_in_memory_database_is_shared_with_request_threads(url):
     with TestClient(create_app(database_url=url), raise_server_exceptions=False) as client:
+        authenticate(client)
         response = client.post("/api/v1/workspaces", json={"name": "Trong bộ nhớ"})
         assert response.status_code == 201
         assert len(client.get("/api/v1/workspaces").json()) == 1
 
 
 @pytest.mark.parametrize("resource", ["documents"])
-def test_unimplemented_collections_are_not_disguised_as_empty(client, resource):
+def test_document_collection_is_implemented_and_initially_empty(client, resource):
     item = client.post("/api/v1/workspaces", json={"name": "Môn học"}).json()
     response = client.get(f"/api/v1/workspaces/{item['id']}/{resource}")
-    assert response.status_code == 501
-    assert response.json()["detail"]["code"] == "not_implemented"
+    assert response.status_code == 200
+    assert response.json() == []
 
 
 def test_openapi_exposes_sse_media_type_and_unimplemented_statuses(client):
@@ -150,9 +169,11 @@ def test_openapi_exposes_sse_media_type_and_unimplemented_statuses(client):
     assert "text/event-stream" in mock_response.get("content", {})
     for path, method in [
         ("/api/v1/chat/sessions/{session_id}/stream", "post"),
-        ("/api/v1/workspaces/{workspace_id}/documents", "get"),
-        ("/api/v1/workspaces/{workspace_id}/documents", "post"),
     ]:
         responses = paths[path][method]["responses"]
         assert "501" in responses
         assert "200" not in responses
+    document_path = paths["/api/v1/workspaces/{workspace_id}/documents"]
+    assert "200" in document_path["get"]["responses"]
+    assert "202" in document_path["post"]["responses"]
+    assert "application/pdf" in document_path["post"]["requestBody"]["content"]

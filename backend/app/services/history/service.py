@@ -15,6 +15,7 @@ from app.schemas.session import (
     ChatSessionDetail,
     ChatSessionRead,
 )
+from app.services.documents.access import require_workspace_access
 
 
 class HistoryService:
@@ -40,6 +41,7 @@ class HistoryService:
             )
         if check_owner and current_user is not None:
             require_owner(session.owner_id, current_user)
+            require_workspace_access(db, session.workspace_id, current_user)
         return session
 
     def list_sessions_with_count(
@@ -113,6 +115,7 @@ class HistoryService:
                 },
             )
 
+        require_workspace_access(db, str(data.workspace_id), current_user)
         session = repo.create_session(
             db=db,
             owner_id=current_user.id,

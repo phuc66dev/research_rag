@@ -13,7 +13,10 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(API_BASE + path, {
     credentials: 'include',
     ...init,
-    headers: { ...(init?.body ? { 'Content-Type': 'application/json' } : {}), ...init?.headers },
+    headers: {
+      ...(typeof init?.body === 'string' ? { 'Content-Type': 'application/json' } : {}),
+      ...init?.headers,
+    },
   });
   if (!response.ok) {
     const body = await response.json().catch(() => ({ detail: response.statusText }));
